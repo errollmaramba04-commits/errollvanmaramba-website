@@ -1,3 +1,8 @@
+diff --git a/script.js b/script.js
+index b0b563a8c21fd948a2ef20370a962a9e27c32876..7dd35cc0f2232f3fb2010bcaf10c15deef296613 100644
+--- a/script.js
++++ b/script.js
+@@ -1,94 +1,82 @@
 -/*
 - * Simple JavaScript for the personal portfolio site.
 - *
