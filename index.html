@@ -1397,8 +1397,7 @@
                         }
                     } catch (error) {
                         console.error("Worker Fetch Error:", error);
-                        // WE CHANGED THIS LINE: It will now show the exact technical error on screen
-                        aiResultBox.innerHTML = `<span style="color: red;"><strong>Error Details:</strong> ${error.message}<br><br>Oops, the AI is taking a quick break. Please try again in a moment.</span>`;
+                        aiResultBox.innerHTML = `Oops, the AI is taking a quick break. Please try again in a moment.`;
                         aiResultBox.style.display = 'block';
                     } finally {
                         // Restore UI
