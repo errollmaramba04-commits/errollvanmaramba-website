@@ -1362,63 +1362,43 @@
                     generateBtn.disabled = true;
                     generateBtn.innerHTML = 'Analyzing...';
 
-                    const apiKey = ""; // Provided by the execution environment
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                    // TODO: Replace this with the actual URL Cloudflare gives you for your worker!
+                    const CLOUDFLARE_WORKER_URL = "https://ai-matchmaker.your-username.workers.dev"; 
                     
-                    const payload = {
-                        contents: [{ parts: [{ text: `Job Description/Company: ${query}` }] }],
-                        systemInstruction: {
-                            parts: [{
-                                text: `You are an AI assistant representing Erroll Van Maramba. A recruiter has provided a job description or company profile. Write a concise, professional, and highly persuasive 2-paragraph pitch explaining exactly why Erroll's specific background makes him a great match for this role. Use this context about Erroll: ${errollContext}. Do not invent experience he doesn't have. Highlight the most relevant overlap in his skills.`
-                            }]
+                    // We combine your context and the user's query into one prompt for the Worker
+                    const finalPrompt = `Here is my background context:\n${errollContext}\n\nAnalyze this job description or company and tell me why I am a great fit:\n${query}`;
+
+                    try {
+                        // Securely call your Cloudflare Worker instead of the Gemini API directly
+                        const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prompt: finalPrompt })
+                        });
+
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        
+                        const data = await response.json();
+                        
+                        if (data.reply) {
+                            aiResultBox.innerHTML = `<strong>✨ AI Fit Analysis:</strong><br><br>${data.reply.replace(/\n/g, '<br>')}`;
+                            aiResultBox.style.display = 'block';
+                        } else {
+                            throw new Error('No text generated');
                         }
-                    };
-
-                    let attempt = 0;
-                    let success = false;
-                    const maxRetries = 5;
-                    const delays = [1000, 2000, 4000, 8000, 16000]; // Exponential backoff
-
-                    while (attempt < maxRetries && !success) {
-                        try {
-                            const response = await fetch(url, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            });
-
-                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                            
-                            const data = await response.json();
-                            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                            
-                            if (generatedText) {
-                                aiResultBox.innerHTML = `<strong>✨ AI Fit Analysis:</strong><br><br>${generatedText.replace(/\n/g, '<br>')}`;
-                                aiResultBox.style.display = 'block';
-                                success = true;
-                            } else {
-                                throw new Error('No text generated');
-                            }
-                        } catch (error) {
-                            attempt++;
-                            if (attempt < maxRetries) {
-                                await new Promise(res => setTimeout(res, delays[attempt - 1]));
-                            } else {
-                                aiResultBox.innerHTML = `<span style="color: red;">Oops, the AI is taking a quick break. Please try again in a moment.</span>`;
-                                aiResultBox.style.display = 'block';
-                            }
-                        }
+                    } catch (error) {
+                        console.error("Worker Fetch Error:", error);
+                        aiResultBox.innerHTML = `<span style="color: red;">Oops, the AI is taking a quick break. Please try again in a moment.</span>`;
+                        aiResultBox.style.display = 'block';
+                    } finally {
+                        // Restore UI
+                        spinner.style.display = 'none';
+                        generateBtn.disabled = false;
+                        generateBtn.innerHTML = '✨ Generate Fit Analysis';
                     }
-
-                    // Restore UI
-                    spinner.style.display = 'none';
-                    generateBtn.disabled = false;
-                    generateBtn.innerHTML = '✨ Generate Fit Analysis';
                 });
             }
         });
     </script>
 </body>
-
 </html>
-
